@@ -1,56 +1,66 @@
+// Fetch the data from the JSON file
 fetch('travel_recommendation_api.json')
     .then(response => response.json())
     .then(data => {
+        // Log the data to check the structure
         console.log(data);
-        // Process the data for recommendations
+
+        // Add the event listener to handle the search button click
+        document.getElementById('search-btn').addEventListener('click', function() {
+            let keyword = document.getElementById('search-input').value.toLowerCase();
+            let results = [];
+
+            // Search for the keyword in different categories (beach, temple, country)
+            if (keyword.includes('beach')) {
+                results = data.beaches; // Accessing the "beaches" data directly
+            } else if (keyword.includes('temple')) {
+                results = data.temples; // Accessing the "temples" data directly
+            } else if (keyword.includes('country')) {
+                results = data.countries; // Accessing the "countries" data directly
+            }
+
+            // Display the results
+            displayResults(results);
+        });
     })
     .catch(error => console.log('Error fetching data:', error));
 
-// Implement logic to handle search keywords and variations.
-
-document.getElementById('search-btn').addEventListener('click', function() {
-    let keyword = document.getElementById('search-input').value.toLowerCase();
-    let results = [];
-    
-    if (keyword.includes('beach')) {
-        results = recommendations.filter(item => item.category === 'beach');
-    } else if (keyword.includes('temple')) {
-        results = recommendations.filter(item => item.category === 'temple');
-    } else if (keyword.includes('country')) {
-        results = recommendations.filter(item => item.category === 'country');
-    }
-
-    displayResults(results);
-});
-
-//Filter and display recommendations based on user input.
-
-function displayRecommendations(keyword, data) {
-    const results = data.filter(item => item.category.toLowerCase().includes(keyword));
+// Function to display the search results on the page
+function displayResults(results) {
     const resultsContainer = document.getElementById('results');
-    
-    results.forEach(result => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-            <h3>${result.name}</h3>
-            <img src="${result.imageUrl}" alt="${result.name}">
-            <p>${result.description}</p>
-        `;
-        resultsContainer.appendChild(div);
-    });
+    resultsContainer.innerHTML = ''; // Clear previous results
+
+    if (results.length === 0) {
+        resultsContainer.innerHTML = 'No recommendations found for your search.';
+    } else {
+        results.forEach(item => {
+            const div = document.createElement('div');
+            div.classList.add('recommendation-item');
+            
+            // Check if the item has a "cities" property (for countries)
+            if (item.cities) {
+                item.cities.forEach(city => {
+                    div.innerHTML += `
+                        <h3>${city.name}</h3>
+                        <img src="${city.imageUrl}" alt="${city.name}" />
+                        <p>${city.description}</p>
+                    `;
+                });
+            } else {
+                div.innerHTML = `
+                    <h3>${item.name}</h3>
+                    <img src="${item.imageUrl}" alt="${item.name}" />
+                    <p>${item.description}</p>
+                `;
+            }
+
+            resultsContainer.appendChild(div);
+        });
+    }
 }
 
-//Implement the logic for the "Clear" button to reset the search results.
-
+// Reset functionality
 document.getElementById('reset-btn').addEventListener('click', function() {
     document.getElementById('search-input').value = '';
     document.getElementById('results').innerHTML = ''; // Clear displayed recommendations
 });
-
-//Display the current time in the country you recommend.
-
-function displayTimeInCountry(timezone) {
-    const options = { timeZone: timezone, hour12: true, hour: 'numeric', minute: 'numeric', second: 'numeric' };
-    const currentTime = new Date().toLocaleTimeString('en-US', options);
-    console.log(`Current time in ${timezone}:`, currentTime);
-}
